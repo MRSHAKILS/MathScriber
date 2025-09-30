@@ -8,6 +8,7 @@
     background: #f8f9fa;
     transition: all 0.3s ease;
     cursor: pointer;
+    position: relative;
 }
 
 .upload-area:hover {
@@ -19,6 +20,16 @@
     border-color: #0d6efd;
     background: #e7f3ff;
     transform: scale(1.02);
+}
+
+.upload-area input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
 }
 
 .image-preview {
