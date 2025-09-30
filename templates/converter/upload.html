@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Images - MathScriber{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h1 class="text-center mb-4">Upload Images for LaTeX Conversion</h1>
+        
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="upload-form">
+                    {% csrf_token %}
+                    
+                    <!-- Task Selection -->
+                    <div class="mb-3">
+                        <label for="{{ form.task.id_for_label }}" class="form-label">
+                            <strong>Content Type:</strong>
+                        </label>
+                        {{ form.task }}
+                        <div class="form-text">{{ form.task.help_text }}</div>
+                    </div>
+                    
+                    <!-- File Upload Area -->
+                    <div class="mb-3">
+                        <label for="images" class="form-label">
+                            <strong>Select Images:</strong>
+                        </label>
+                        <div class="upload-area" id="upload-area">
+                            <i class="bi bi-cloud-upload" style="font-size: 2rem; color: #6c757d;"></i>
+                            <p class="mt-2 mb-2">Drag and drop images here or click to select</p>
+                            <input type="file" name="images" id="images" multiple accept="image/*" class="form-control" style="display: none;">
+                        </div>
+                        <div class="form-text">Select multiple images to convert to LaTeX</div>
+                    </div>
+                    
+                    <!-- Image Preview Area -->
+                    <div id="preview-container" class="mb-3" style="display: none;">
+                        <label class="form-label"><strong>Selected Images:</strong></label>
+                        <div id="image-previews"></div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" disabled>
+                            <i class="bi bi-magic"></i> Convert to LaTeX
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Recent Uploads -->
+        {% if recent_uploads %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Uploads</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for upload in recent_uploads %}
+                    <div class="col-md-3 mb-3">
+                        <div class="card">
+                            <img src="{{ upload.image.url }}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                            <div class="card-body p-2">
+                                <small class="text-muted">{{ upload.task|title }}</small>
+                                <br>
+                                <small class="text-muted">{{ upload.created_at|date:"M d, H:i" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('images');
+    const uploadArea = document.getElementById('upload-area');
+    const previewContainer = document.getElementById('preview-container');
+    const imagePreviewsDiv = document.getElementById('image-previews');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    let selectedFiles = [];
+    
+    // File input change handler
+    fileInput.addEventListener('change', function(e) {
+        handleFiles(e.target.files);
+    });
+    
+    // Drag and drop handlers
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+    });
+    
+    uploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    function handleFiles(files) {
+        selectedFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+        
+        if (selectedFiles.length === 0) {
+            alert('Please select valid image files.');
+            return;
+        }
+        
+        updateFileInput();
+        showPreviews();
+        updateSubmitButton();
+    }
+    
+    function updateFileInput() {
+        // Create a new file list with selected files
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
+    }
+    
+    function showPreviews() {
+        imagePreviewsDiv.innerHTML = '';
+        
+        if (selectedFiles.length === 0) {
+            previewContainer.style.display = 'none';
+            return;
+        }
+        
+        previewContainer.style.display = 'block';
+        
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'preview-container';
+                previewDiv.innerHTML = `
+                    <img src="${e.target.result}" class="image-preview" alt="Preview">
+                    <button type="button" class="remove-btn" onclick="removeFile(${index})">&times;</button>
+                    <div class="text-center mt-1">
+                        <small class="text-muted">${file.name}</small>
+                    </div>
+                `;
+                imagePreviewsDiv.appendChild(previewDiv);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    window.removeFile = function(index) {
+        selectedFiles.splice(index, 1);
+        updateFileInput();
+        showPreviews();
+        updateSubmitButton();
+    };
+    
+    function updateSubmitButton() {
+        submitBtn.disabled = selectedFiles.length === 0;
+    }
+    
+    // Form submission with loading state
+    document.getElementById('upload-form').addEventListener('submit', function() {
+        if (selectedFiles.length > 0) {
+            submitBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Processing...';
+            submitBtn.disabled = true;
+        }
+    });
+});
+</script>
+{% endblock %}

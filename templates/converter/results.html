@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Results - MathScriber{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>LaTeX Conversion Results</h1>
+            <a href="{% url 'converter:upload' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Upload More Images
+            </a>
+        </div>
+        
+        {% if processed_images %}
+            {% for image in processed_images %}
+            <div class="card result-card">
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Original Image -->
+                        <div class="col-md-4">
+                            <h5 class="card-title">Original Image</h5>
+                            <img src="{{ image.image_url }}" class="img-fluid rounded" alt="Original Image">
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <strong>File:</strong> {{ image.filename }}<br>
+                                    <strong>Type:</strong> {{ image.task|title }}<br>
+                                    {% if image.created_at %}
+                                        <strong>Processed:</strong> {{ image.created_at|date:"M d, Y H:i" }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <!-- LaTeX Output -->
+                        <div class="col-md-8">
+                            <h5 class="card-title">LaTeX Output</h5>
+                            
+                            <!-- Raw LaTeX Code -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Raw LaTeX Code:</strong></label>
+                                <div class="latex-output">{{ image.latex_output }}</div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('latex-{{ image.id }}')">
+                                    <i class="bi bi-clipboard"></i> Copy LaTeX
+                                </button>
+                                <textarea id="latex-{{ image.id }}" style="display: none;">{{ image.latex_output }}</textarea>
+                            </div>
+                            
+                            <!-- Rendered Output -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Rendered Output:</strong></label>
+                                <div class="border rounded p-3 bg-white">
+                                    <div class="rendered-math" data-latex="{{ image.latex_output }}">
+                                        $${{ image.latex_output }}$$
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-image" style="font-size: 4rem; color: #6c757d;"></i>
+                </div>
+                <h3 class="text-muted">No images processed yet</h3>
+                <p class="text-muted">Upload some images to see the LaTeX conversion results here.</p>
+                <a href="{% url 'converter:upload' %}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-upload"></i> Upload Your First Images
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Re-render MathJax after page load
+    if (window.MathJax) {
+        MathJax.typesetPromise().then(() => {
+            console.log('MathJax rendering complete');
+        }).catch((err) => console.log('MathJax rendering error:', err));
+    }
+});
+
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    element.setSelectionRange(0, 99999); // For mobile devices
+    
+    try {
+        document.execCommand('copy');
+        // Show success feedback
+        const button = element.previousElementSibling;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-secondary');
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy text: ', err);
+        alert('Failed to copy to clipboard. Please copy manually.');
+    }
+}
+
+// Alternative clipboard API for modern browsers
+async function copyToClipboardModern(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        console.log('Text copied to clipboard');
+    } catch (err) {
+        console.error('Failed to copy: ', err);
+        // Fallback to the old method
+        copyToClipboard(text);
+    }
+}
+</script>
+{% endblock %}

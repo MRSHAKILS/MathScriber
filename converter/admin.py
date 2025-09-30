@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import UploadedImage
 
-# Register your models here.
+@admin.register(UploadedImage)
+class UploadedImageAdmin(admin.ModelAdmin):
+    list_display = ("id", "task", "image", "created_at")
