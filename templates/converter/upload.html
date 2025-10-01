@@ -29,14 +29,20 @@
                         <div class="upload-area" id="upload-area">
                             <i class="bi bi-cloud-upload" style="font-size: 2rem; color: #6c757d;"></i>
                             <p class="mt-2 mb-2">Drag and drop images here or click to select</p>
-                            <input type="file" name="images" id="images" multiple accept="image/*" class="form-control">
+                            <p class="text-muted">You can select multiple images at once</p>
+                            <input type="file" name="images" id="images" multiple accept="image/*" style="display: none;">
                         </div>
                         <div class="form-text">Select multiple images to convert to LaTeX</div>
                     </div>
                     
                     <!-- Image Preview Area -->
                     <div id="preview-container" class="mb-3" style="display: none;">
-                        <label class="form-label"><strong>Selected Images:</strong></label>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0"><strong>Selected Images:</strong></label>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllFiles()">
+                                <i class="bi bi-trash"></i> Clear All
+                            </button>
+                        </div>
                         <div id="image-previews"></div>
                     </div>
                     
@@ -59,8 +65,13 @@
             <div class="card-body">
                 <div class="row">
                     {% for upload in recent_uploads %}
-                    <div class="col-md-3 mb-3">
-                        <div class="card">
+                    <div class="col-md-3 mb-3" data-upload-id="{{ upload.id }}">
+                        <div class="card position-relative">
+                            <button type="button" class="btn btn-danger btn-sm position-absolute" 
+                                    style="top: 5px; right: 5px; z-index: 10;" 
+                                    onclick="deleteUpload({{ upload.id }})">
+                                <i class="bi bi-trash"></i>
+                            </button>
                             <img src="{{ upload.image.url }}" class="card-img-top" style="height: 150px; object-fit: cover;">
                             <div class="card-body p-2">
                                 <small class="text-muted">{{ upload.task|title }}</small>
@@ -91,7 +102,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // File input change handler
     fileInput.addEventListener('change', function(e) {
-        handleFiles(e.target.files);
+        // Add new files to existing selection instead of replacing
+        const newFiles = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+        selectedFiles = selectedFiles.concat(newFiles);
+        updateFileInput();
+        showPreviews();
+        updateSubmitButton();
     });
     
     // Drag and drop handlers
@@ -109,26 +125,22 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         uploadArea.classList.remove('dragover');
         
-        const files = e.dataTransfer.files;
-        handleFiles(files);
+        const newFiles = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+        if (newFiles.length === 0) {
+            alert('Please drop valid image files.');
+            return;
+        }
+        
+        // Add dropped files to existing selection
+        selectedFiles = selectedFiles.concat(newFiles);
+        updateFileInput();
+        showPreviews();
+        updateSubmitButton();
     });
     
     uploadArea.addEventListener('click', function() {
         fileInput.click();
     });
-    
-    function handleFiles(files) {
-        selectedFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
-        
-        if (selectedFiles.length === 0) {
-            alert('Please select valid image files.');
-            return;
-        }
-        
-        updateFileInput();
-        showPreviews();
-        updateSubmitButton();
-    }
     
     function updateFileInput() {
         // Create a new file list with selected files
@@ -174,7 +186,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateSubmitButton() {
         submitBtn.disabled = selectedFiles.length === 0;
+        if (selectedFiles.length > 0) {
+            submitBtn.innerHTML = `<i class="bi bi-magic"></i> Convert ${selectedFiles.length} Image(s) to LaTeX`;
+        } else {
+            submitBtn.innerHTML = '<i class="bi bi-magic"></i> Convert to LaTeX';
+        }
     }
+    
+    // Add clear all button functionality
+    window.clearAllFiles = function() {
+        selectedFiles = [];
+        fileInput.value = '';
+        showPreviews();
+        updateSubmitButton();
+    };
     
     // Form submission with loading state
     document.getElementById('upload-form').addEventListener('submit', function() {
@@ -184,5 +209,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Delete upload function
+async function deleteUpload(uploadId) {
+    if (!confirm('Are you sure you want to delete this upload?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/delete/${uploadId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (response.ok) {
+            // Remove the card from the DOM
+            const card = document.querySelector(`[data-upload-id="${uploadId}"]`);
+            if (card) {
+                card.remove();
+            }
+            // Reload the page to refresh the recent uploads
+            location.reload();
+        } else {
+            alert('Error deleting upload. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting upload. Please try again.');
+    }
+}
 </script>
 {% endblock %}

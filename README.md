@@ -55,35 +55,95 @@ MathScriber/
 └── db.sqlite3               # SQLite database
 ```
 
+## Requirements Files
+
+The project includes two requirements files for different installation scenarios:
+
+### `requirements.txt` - Full Installation
+
+- **Purpose**: Complete setup with all OCR dependencies and optional features
+- **Includes**: Django, Pillow, pix2tex, pytesseract, gunicorn, and more
+- **Use Case**: Production deployment or full development environment
+- **OCR Support**: ✅ Full equation and table OCR functionality
+
+### `requirements-minimal.txt` - Minimal Installation
+
+- **Purpose**: Basic setup for testing and development without heavy OCR dependencies
+- **Includes**: Only Django and Pillow (core dependencies)
+- **Use Case**: Quick testing, development, or when OCR libraries are not available
+- **OCR Support**: ⚠️ Uses mock LaTeX samples for demonstration
+
+### Dependencies Overview
+
+```
+Core Dependencies:
+├── Django 5.2.6          # Web framework
+├── Pillow 11.3.0         # Image processing
+└── Python 3.13+          # Python version
+
+OCR Dependencies (Optional):
+├── pix2tex               # Equation OCR (LaTeX recognition)
+├── pytesseract           # Table OCR (text recognition)
+└── tesseract-ocr         # System requirement for pytesseract
+
+Production Dependencies (Optional):
+├── gunicorn              # WSGI server
+├── psycopg2-binary       # PostgreSQL support
+└── django-cors-headers   # API CORS support
+```
+
 ## Installation & Setup
 
-1. **Install Dependencies**:
+### Option 1: Minimal Installation (Recommended for Testing)
 
-   ```bash
-   pip install Django Pillow
-   ```
+```bash
+# Install minimal dependencies
+pip install -r requirements-minimal.txt
 
-2. **Run Migrations**:
+# Run migrations
+python manage.py migrate
 
-   ```bash
-   python manage.py migrate
-   ```
+# Run development server
+python manage.py runserver
+```
 
-3. **Create Superuser** (optional):
+### Option 2: Full Installation (With OCR Support)
 
-   ```bash
-   python manage.py createsuperuser
-   ```
+```bash
+# Install all dependencies including OCR libraries
+pip install -r requirements.txt
 
-4. **Run Development Server**:
+# Run migrations
+python manage.py migrate
 
-   ```bash
-   python manage.py runserver
-   ```
+# Create superuser (optional)
+python manage.py createsuperuser
 
-5. **Access Application**:
-   - Main App: http://127.0.0.1:8000/
-   - Admin: http://127.0.0.1:8000/admin/
+# Run development server
+python manage.py runserver
+```
+
+### Option 3: Manual Installation
+
+```bash
+# Core dependencies only
+pip install Django==5.2.6 Pillow==11.3.0
+
+# Optional: Add OCR support
+pip install pix2tex pytesseract
+
+# Run migrations
+python manage.py migrate
+
+# Run development server
+python manage.py runserver
+```
+
+### Access Application
+
+- **Main App**: http://127.0.0.1:8000/
+- **Admin Panel**: http://127.0.0.1:8000/admin/
+- **Results Page**: http://127.0.0.1:8000/results/
 
 ## Usage
 

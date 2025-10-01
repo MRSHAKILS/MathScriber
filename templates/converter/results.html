@@ -14,7 +14,13 @@
         
         {% if processed_images %}
             {% for image in processed_images %}
-            <div class="card result-card">
+            <div class="card result-card" data-upload-id="{{ image.id }}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Result #{{ image.id }}</h6>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="deleteUpload({{ image.id }})">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
                 <div class="card-body">
                     <div class="row">
                         <!-- Original Image -->
@@ -109,6 +115,55 @@ function copyToClipboard(elementId) {
     } catch (err) {
         console.error('Failed to copy text: ', err);
         alert('Failed to copy to clipboard. Please copy manually.');
+    }
+}
+
+// Delete upload function
+async function deleteUpload(uploadId) {
+    if (!confirm('Are you sure you want to delete this result? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/delete/${uploadId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (response.ok) {
+            // Remove the card from the DOM
+            const card = document.querySelector(`[data-upload-id="${uploadId}"]`);
+            if (card) {
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    card.remove();
+                    // Check if there are no more results
+                    const remainingCards = document.querySelectorAll('[data-upload-id]');
+                    if (remainingCards.length === 0) {
+                        location.reload(); // Reload to show the "no results" message
+                    }
+                }, 300);
+            }
+            
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                Result deleted successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('main').insertBefore(alertDiv, document.querySelector('main').firstChild);
+        } else {
+            alert('Error deleting result. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting result. Please try again.');
     }
 }
 

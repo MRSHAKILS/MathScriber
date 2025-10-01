@@ -1,10 +1,10 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 import os
 import json
 
@@ -103,3 +103,32 @@ def results_view(request):
         ],
         'form': MultipleImageUploadForm()
     })
+
+@require_POST
+def delete_upload_view(request, upload_id):
+    """
+    Delete a specific upload and its associated file.
+    """
+    try:
+        upload = get_object_or_404(UploadedImage, id=upload_id)
+        
+        # Delete the file from storage
+        if upload.image:
+            if os.path.exists(upload.image.path):
+                os.remove(upload.image.path)
+        
+        # Delete the database record
+        upload.delete()
+        
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse({'success': True, 'message': 'Upload deleted successfully'})
+        else:
+            messages.success(request, 'Upload deleted successfully!')
+            return redirect('converter:upload')
+            
+    except Exception as e:
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        else:
+            messages.error(request, f'Error deleting upload: {str(e)}')
+            return redirect('converter:upload')

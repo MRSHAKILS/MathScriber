@@ -1,0 +1,7 @@
+# Minimal requirements for MathScriber - Core functionality only
+Django==5.2.6
+Pillow==11.3.0
+
+# Required for OCR functionality (install these if you want real OCR)
+# pix2tex>=0.1.2
+# pytesseract>=0.3.10
