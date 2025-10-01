@@ -46,9 +46,14 @@
                             <div class="mb-3">
                                 <label class="form-label"><strong>Raw LaTeX Code:</strong></label>
                                 <div class="latex-output">{{ image.latex_output }}</div>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('latex-{{ image.id }}')">
-                                    <i class="bi bi-clipboard"></i> Copy LaTeX
-                                </button>
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="copy-btn-{{ image.id }}" onclick="copyLatexToClipboard('{{ image.id }}', '{{ image.latex_output|escapejs }}')">
+                                        <i class="bi bi-clipboard"></i> Copy LaTeX
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="selectLatexText('{{ image.id }}')">
+                                        <i class="bi bi-cursor-text"></i> Select All
+                                    </button>
+                                </div>
                                 <textarea id="latex-{{ image.id }}" style="display: none;">{{ image.latex_output }}</textarea>
                             </div>
                             
