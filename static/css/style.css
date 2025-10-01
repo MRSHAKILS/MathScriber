@@ -121,6 +121,55 @@
     100% { transform: scale(1); }
 }
 
+/* LaTeX output styling */
+.latex-output {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 10px 0;
+    font-family: 'Courier New', monospace;
+    white-space: pre-wrap;
+    font-size: 14px;
+    max-height: 200px;
+    overflow-y: auto;
+    position: relative;
+    user-select: text;
+    cursor: text;
+}
+
+.latex-output:hover {
+    border-color: #adb5bd;
+    background: #f1f3f4;
+}
+
+/* Copy button improvements */
+.copy-buttons {
+    margin-top: 10px;
+}
+
+.copy-buttons .btn {
+    transition: all 0.2s ease;
+}
+
+.copy-buttons .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Overlay for manual copy */
+.copy-overlay {
+    backdrop-filter: blur(4px);
+}
+
+.copy-overlay textarea {
+    resize: none;
+    border: 2px solid #0d6efd;
+}
+
+.copy-overlay textarea:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
 /* File counter badge */
 .file-counter {
     position: absolute;

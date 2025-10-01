@@ -45,9 +45,9 @@
                             <!-- Raw LaTeX Code -->
                             <div class="mb-3">
                                 <label class="form-label"><strong>Raw LaTeX Code:</strong></label>
-                                <div class="latex-output">{{ image.latex_output }}</div>
-                                <div class="mt-2">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="copy-btn-{{ image.id }}" onclick="copyLatexToClipboard('{{ image.id }}', '{{ image.latex_output|escapejs }}')">
+                                <div class="latex-output" id="latex-display-{{ image.id }}" onclick="selectLatexDisplay('{{ image.id }}')" title="Click to select all text">{{ image.latex_output }}</div>
+                                <div class="copy-buttons mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="copy-btn-{{ image.id }}" onclick="copyLatexToClipboard('{{ image.id }}', `{{ image.latex_output|escapejs }}`)">
                                         <i class="bi bi-clipboard"></i> Copy LaTeX
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="selectLatexText('{{ image.id }}')">
@@ -98,28 +98,126 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Modern copy to clipboard function
+async function copyLatexToClipboard(imageId, latexText) {
+    try {
+        const button = document.getElementById(`copy-btn-${imageId}`);
+        const originalText = button.innerHTML;
+        
+        // Try modern clipboard API first
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(latexText);
+            showCopySuccess(button, originalText);
+        } else {
+            // Fallback to older method
+            const textarea = document.getElementById(`latex-${imageId}`);
+            textarea.style.display = 'block';
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            
+            if (document.execCommand('copy')) {
+                showCopySuccess(button, originalText);
+            } else {
+                throw new Error('Copy command failed');
+            }
+            
+            textarea.style.display = 'none';
+        }
+    } catch (err) {
+        console.error('Failed to copy text: ', err);
+        alert('Failed to copy to clipboard. The text has been selected for you to copy manually.');
+        selectLatexText(imageId);
+    }
+}
+
+// Show copy success feedback
+function showCopySuccess(button, originalText) {
+    button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+    button.classList.remove('btn-outline-secondary');
+    button.classList.add('btn-success');
+    
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+
+// Select LaTeX display text
+function selectLatexDisplay(imageId) {
+    const displayElement = document.getElementById(`latex-display-${imageId}`);
+    if (window.getSelection && document.createRange) {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(displayElement);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        // Highlight the selected text briefly
+        displayElement.style.backgroundColor = '#e7f3ff';
+        setTimeout(() => {
+            displayElement.style.backgroundColor = '';
+        }, 1000);
+    }
+}
+
+// Select LaTeX text for manual copying
+function selectLatexText(imageId) {
+    const textarea = document.getElementById(`latex-${imageId}`);
+    textarea.style.display = 'block';
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    textarea.select();
+    textarea.setSelectionRange(0, 99999);
+    
+    // Show a temporary overlay with the selected text
+    const overlay = document.createElement('div');
+    overlay.className = 'position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
+    overlay.style.backgroundColor = 'rgba(0,0,0,0.8)';
+    overlay.style.zIndex = '9999';
+    overlay.innerHTML = `
+        <div class="bg-white p-4 rounded shadow" style="max-width: 80%; max-height: 80%; overflow: auto;">
+            <h5>LaTeX Code Selected</h5>
+            <p>The LaTeX code has been selected. Press Ctrl+C (or Cmd+C on Mac) to copy:</p>
+            <textarea class="form-control" rows="10" readonly style="font-family: monospace;">${textarea.value}</textarea>
+            <div class="mt-3 text-end">
+                <button class="btn btn-secondary" onclick="this.closest('.position-fixed').remove()">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    overlay.querySelector('textarea').select();
+    
+    setTimeout(() => {
+        textarea.style.display = 'none';
+    }, 100);
+}
+
+// Legacy copy function (keeping for backward compatibility)
 function copyToClipboard(elementId) {
     const element = document.getElementById(elementId);
+    if (!element) {
+        console.error('Element not found:', elementId);
+        return;
+    }
+    
+    element.style.display = 'block';
     element.select();
-    element.setSelectionRange(0, 99999); // For mobile devices
+    element.setSelectionRange(0, 99999);
     
     try {
-        document.execCommand('copy');
-        // Show success feedback
-        const button = element.previousElementSibling;
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="bi bi-check"></i> Copied!';
-        button.classList.remove('btn-outline-secondary');
-        button.classList.add('btn-success');
-        
-        setTimeout(() => {
-            button.innerHTML = originalText;
-            button.classList.remove('btn-success');
-            button.classList.add('btn-outline-secondary');
-        }, 2000);
+        const successful = document.execCommand('copy');
+        if (successful) {
+            alert('LaTeX code copied to clipboard!');
+        } else {
+            throw new Error('Copy command failed');
+        }
     } catch (err) {
         console.error('Failed to copy text: ', err);
         alert('Failed to copy to clipboard. Please copy manually.');
+    } finally {
+        element.style.display = 'none';
     }
 }
 
@@ -169,18 +267,6 @@ async function deleteUpload(uploadId) {
     } catch (error) {
         console.error('Error:', error);
         alert('Error deleting result. Please try again.');
-    }
-}
-
-// Alternative clipboard API for modern browsers
-async function copyToClipboardModern(text) {
-    try {
-        await navigator.clipboard.writeText(text);
-        console.log('Text copied to clipboard');
-    } catch (err) {
-        console.error('Failed to copy: ', err);
-        // Fallback to the old method
-        copyToClipboard(text);
     }
 }
 </script>
