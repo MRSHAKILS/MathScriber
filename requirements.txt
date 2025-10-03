@@ -9,6 +9,8 @@ Pillow==11.3.0
 
 # OCR dependencies for equation recognition
 pix2tex>=0.1.2
+torch>=2.0.0
+torchvision>=0.15.0
 
 # OCR dependencies for table recognition  
 pytesseract>=0.3.10
@@ -20,7 +22,7 @@ gunicorn>=20.1.0
 psycopg2-binary>=2.9.0
 
 # Optional: Environment variables management
-python-decodotenv>=1.0.0
+python-decouple>=3.6
 
 # Optional: CORS headers for API development
 django-cors-headers>=4.0.0
