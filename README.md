@@ -193,16 +193,17 @@ python manage.py runserver
 
 ### Current OCR Capabilities
 
-| Feature | Status | Requirements |
-|---------|--------|--------------|
-| **Equation OCR** | ✅ **Working** | `pix2tex` (installed) |
-| **Table OCR** | ⚠️ **Needs Setup** | `tesseract` (not installed) |
-| **Image Upload** | ✅ **Working** | Built-in |
-| **LaTeX Rendering** | ✅ **Working** | MathJax |
+| Feature             | Status             | Requirements                |
+| ------------------- | ------------------ | --------------------------- |
+| **Equation OCR**    | ✅ **Working**     | `pix2tex` (installed)       |
+| **Table OCR**       | ⚠️ **Needs Setup** | `tesseract` (not installed) |
+| **Image Upload**    | ✅ **Working**     | Built-in                    |
+| **LaTeX Rendering** | ✅ **Working**     | MathJax                     |
 
 ### Test Your OCR Setup
 
 Run this command to check OCR status:
+
 ```bash
 python -c "import sys; sys.path.append('.'); from converter.ocr_utils import test_ocr_setup; import json; print(json.dumps(test_ocr_setup(), indent=2))"
 ```
@@ -210,6 +211,7 @@ python -c "import sys; sys.path.append('.'); from converter.ocr_utils import tes
 ### Example Results
 
 **Equation OCR Output:**
+
 - Input: Image of "(11+x)/x³ + 2x(5-x)"
 - Output: `\[ {\frac{11+x}{x^{3}}}+2x(5-x) \]`
 - Accuracy: High for handwritten and printed equations
