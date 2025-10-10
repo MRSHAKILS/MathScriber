@@ -31,6 +31,12 @@
                                 <small class="text-muted">
                                     <strong>File:</strong> {{ image.filename }}<br>
                                     <strong>Type:</strong> {{ image.task|title }}<br>
+                                    {% if image.file_type %}
+                                        <strong>Format:</strong> {{ image.file_type }}
+                                        {% if image.page_count %}
+                                            ({{ image.page_count }} page{{ image.page_count|pluralize }})
+                                        {% endif %}<br>
+                                    {% endif %}
                                     {% if image.created_at %}
                                         <strong>Processed:</strong> {{ image.created_at|date:"M d, Y H:i" }}
                                     {% endif %}

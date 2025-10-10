@@ -10,7 +10,7 @@ import json
 
 from .models import UploadedImage
 from .forms import MultipleImageUploadForm
-from .ocr_utils import process_image_to_latex, validate_image
+from .ocr_utils import process_image_to_latex, validate_image, is_pdf_file, validate_pdf, process_pdf_to_latex
 
 def upload_view(request):
     """
@@ -26,36 +26,66 @@ def upload_view(request):
             
             for image in images:
                 try:
-                    # Validate file type
-                    valid_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff']
-                    if not any(image.name.lower().endswith(ext) for ext in valid_extensions):
-                        messages.error(request, f"File {image.name} is not a valid image format.")
+                    # Validate file type - now supports images and PDFs
+                    valid_image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff']
+                    is_image = any(image.name.lower().endswith(ext) for ext in valid_image_extensions)
+                    is_pdf = image.name.lower().endswith('.pdf')
+                    
+                    if not (is_image or is_pdf):
+                        messages.error(request, f"File {image.name} is not a valid image or PDF format.")
                         continue
                     
-                    # Save the uploaded image
+                    # Save the uploaded file
                     uploaded_image = UploadedImage.objects.create(
                         image=image,
                         task=task,
                         latex_output=""  # Will be updated after processing
                     )
                     
-                    # Process the image to get LaTeX output
-                    image_path = uploaded_image.image.path
-                    if validate_image(image_path):
-                        latex_output = process_image_to_latex(image_path, task)
-                        uploaded_image.latex_output = latex_output
-                        uploaded_image.save()
-                        
-                        processed_images.append({
-                            'id': uploaded_image.id,
-                            'image_url': uploaded_image.image.url,
-                            'latex_output': latex_output,
-                            'filename': uploaded_image.image.name,
-                            'task': task
-                        })
+                    # Process the file to get LaTeX output
+                    file_path = uploaded_image.image.path
+                    
+                    if is_pdf:
+                        # Handle PDF processing
+                        if validate_pdf(file_path):
+                            print(f"📄 Processing PDF: {image.name}")
+                            latex_outputs = process_pdf_to_latex(file_path, task)
+                            
+                            # Combine all pages into one output
+                            combined_latex = "\n\n".join(latex_outputs)
+                            uploaded_image.latex_output = combined_latex
+                            uploaded_image.save()
+                            
+                            processed_images.append({
+                                'id': uploaded_image.id,
+                                'image_url': uploaded_image.image.url,
+                                'latex_output': combined_latex,
+                                'filename': uploaded_image.image.name,
+                                'task': task,
+                                'file_type': 'PDF',
+                                'page_count': len(latex_outputs)
+                            })
+                        else:
+                            messages.error(request, f"Invalid PDF file: {image.name}")
+                            uploaded_image.delete()
                     else:
-                        messages.error(request, f"Invalid image file: {image.name}")
-                        uploaded_image.delete()
+                        # Handle image processing (existing logic)
+                        if validate_image(file_path):
+                            latex_output = process_image_to_latex(file_path, task)
+                            uploaded_image.latex_output = latex_output
+                            uploaded_image.save()
+                            
+                            processed_images.append({
+                                'id': uploaded_image.id,
+                                'image_url': uploaded_image.image.url,
+                                'latex_output': latex_output,
+                                'filename': uploaded_image.image.name,
+                                'task': task,
+                                'file_type': 'Image'
+                            })
+                        else:
+                            messages.error(request, f"Invalid image file: {image.name}")
+                            uploaded_image.delete()
                         
                 except Exception as e:
                     messages.error(request, f"Error processing {image.name}: {str(e)}")
@@ -69,7 +99,7 @@ def upload_view(request):
             else:
                 messages.error(request, "No images were successfully processed.")
         elif not images:
-            messages.error(request, "Please select at least one image.")
+            messages.error(request, "Please select at least one image or PDF file.")
         else:
             messages.error(request, "Please correct the errors below.")
     

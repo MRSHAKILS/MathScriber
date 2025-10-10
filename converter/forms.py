@@ -18,7 +18,7 @@ class SingleImageUploadForm(forms.ModelForm):
         fields = ['image', 'task']
         widgets = {
             'image': forms.FileInput(attrs={
-                'accept': 'image/*',
+                'accept': 'image/*,.pdf',
                 'class': 'form-control'
             }),
             'task': forms.Select(attrs={

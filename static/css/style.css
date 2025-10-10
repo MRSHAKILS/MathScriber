@@ -29,6 +29,25 @@
     box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
 }
 
+/* PDF preview styles */
+.pdf-preview {
+    width: 200px;
+    height: 200px;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.pdf-preview:hover {
+    border-color: #dc3545;
+    background: #ffe6e6;
+}
+
 .image-preview {
     max-width: 200px;
     max-height: 200px;

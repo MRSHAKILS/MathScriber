@@ -5,7 +5,7 @@
 {% block content %}
 <div class="row">
     <div class="col-lg-8 mx-auto">
-        <h1 class="text-center mb-4">Upload Images for LaTeX Conversion</h1>
+        <h1 class="text-center mb-4">Upload Images & PDFs for LaTeX Conversion</h1>
         
         <div class="card">
             <div class="card-body">
@@ -24,21 +24,21 @@
                     <!-- File Upload Area -->
                     <div class="mb-3">
                         <label for="images" class="form-label">
-                            <strong>Select Images:</strong>
+                            <strong>Select Images or PDFs:</strong>
                         </label>
                         <div class="upload-area" id="upload-area">
                             <i class="bi bi-cloud-upload" style="font-size: 2rem; color: #6c757d;"></i>
-                            <p class="mt-2 mb-2">Drag and drop images here or click to select</p>
-                            <p class="text-muted">You can select multiple images at once</p>
-                            <input type="file" name="images" id="images" multiple accept="image/*" style="display: none;">
+                            <p class="mt-2 mb-2">Drag and drop images or PDFs here or click to select</p>
+                            <p class="text-muted">You can select multiple files at once</p>
+                            <input type="file" name="images" id="images" multiple accept="image/*,.pdf" style="display: none;">
                         </div>
-                        <div class="form-text">Select multiple images to convert to LaTeX</div>
+                        <div class="form-text">Select multiple images (JPG, PNG, etc.) or PDF files to convert to LaTeX</div>
                     </div>
                     
                     <!-- Image Preview Area -->
                     <div id="preview-container" class="mb-3" style="display: none;">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label mb-0"><strong>Selected Images:</strong></label>
+                            <label class="form-label mb-0"><strong>Selected Files:</strong></label>
                             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllFiles()">
                                 <i class="bi bi-trash"></i> Clear All
                             </button>
@@ -103,7 +103,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // File input change handler
     fileInput.addEventListener('change', function(e) {
         // Add new files to existing selection instead of replacing
-        const newFiles = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+        const newFiles = Array.from(e.target.files).filter(file => 
+            file.type.startsWith('image/') || file.type === 'application/pdf'
+        );
         selectedFiles = selectedFiles.concat(newFiles);
         updateFileInput();
         showPreviews();
@@ -125,9 +127,11 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         uploadArea.classList.remove('dragover');
         
-        const newFiles = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+        const newFiles = Array.from(e.dataTransfer.files).filter(file => 
+            file.type.startsWith('image/') || file.type === 'application/pdf'
+        );
         if (newFiles.length === 0) {
-            alert('Please drop valid image files.');
+            alert('Please drop valid image or PDF files.');
             return;
         }
         
@@ -160,20 +164,37 @@ document.addEventListener('DOMContentLoaded', function() {
         previewContainer.style.display = 'block';
         
         selectedFiles.forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const previewDiv = document.createElement('div');
-                previewDiv.className = 'preview-container';
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'preview-container';
+            
+            if (file.type === 'application/pdf') {
+                // PDF file preview
                 previewDiv.innerHTML = `
-                    <img src="${e.target.result}" class="image-preview" alt="Preview">
-                    <button type="button" class="remove-btn" onclick="removeFile(${index})">&times;</button>
-                    <div class="text-center mt-1">
-                        <small class="text-muted">${file.name}</small>
+                    <div class="pdf-preview">
+                        <i class="bi bi-file-earmark-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                        <div class="text-center mt-1">
+                            <small class="text-muted">${file.name}</small><br>
+                            <small class="text-muted">PDF File</small>
+                        </div>
                     </div>
+                    <button type="button" class="remove-btn" onclick="removeFile(${index})">&times;</button>
                 `;
-                imagePreviewsDiv.appendChild(previewDiv);
-            };
-            reader.readAsDataURL(file);
+            } else {
+                // Image file preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewDiv.innerHTML = `
+                        <img src="${e.target.result}" class="image-preview" alt="Preview">
+                        <button type="button" class="remove-btn" onclick="removeFile(${index})">&times;</button>
+                        <div class="text-center mt-1">
+                            <small class="text-muted">${file.name}</small>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            imagePreviewsDiv.appendChild(previewDiv);
         });
     }
     

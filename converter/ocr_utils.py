@@ -3,6 +3,10 @@ import random
 from PIL import Image
 import sys
 import importlib.util
+import fitz  # PyMuPDF
+from pdf2image import convert_from_path
+import tempfile
+import shutil
 
 # Global variables to store loaded modules
 latexocr_module = None
@@ -159,6 +163,90 @@ def validate_image(image_path):
             img.verify()
         return True
     except Exception:
+        return False
+
+def validate_pdf(pdf_path):
+    """
+    Validate that the uploaded file is a valid PDF.
+    """
+    try:
+        doc = fitz.open(pdf_path)
+        page_count = len(doc)
+        doc.close()
+        return page_count > 0
+    except Exception:
+        return False
+
+def pdf_to_images(pdf_path, output_dir=None):
+    """
+    Convert PDF pages to images.
+    Returns list of image paths.
+    """
+    try:
+        if output_dir is None:
+            output_dir = tempfile.mkdtemp()
+        
+        # Convert PDF to images using pdf2image
+        images = convert_from_path(pdf_path, dpi=300, fmt='PNG')
+        
+        image_paths = []
+        for i, image in enumerate(images):
+            image_path = os.path.join(output_dir, f'page_{i+1}.png')
+            image.save(image_path, 'PNG')
+            image_paths.append(image_path)
+        
+        return image_paths
+    except Exception as e:
+        print(f"Error converting PDF to images: {e}")
+        return []
+
+def process_pdf_to_latex(pdf_path, task_type):
+    """
+    Process PDF file by converting pages to images and then running OCR.
+    Returns a list of LaTeX outputs for each page.
+    """
+    try:
+        # Create temporary directory for images
+        temp_dir = tempfile.mkdtemp()
+        
+        # Convert PDF to images
+        image_paths = pdf_to_images(pdf_path, temp_dir)
+        
+        if not image_paths:
+            return [f"% Error: Could not convert PDF to images"]
+        
+        results = []
+        for i, image_path in enumerate(image_paths):
+            print(f"🔄 Processing PDF page {i+1}/{len(image_paths)}")
+            
+            # Process each page image with OCR
+            latex_output = process_image_to_latex(image_path, task_type)
+            
+            # Add page information to output
+            page_result = f"% Page {i+1}\n{latex_output}"
+            results.append(page_result)
+        
+        # Cleanup temporary directory
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        
+        return results
+        
+    except Exception as e:
+        print(f"❌ Error processing PDF: {e}")
+        return [f"% Error processing PDF: {str(e)}"]
+
+def is_pdf_file(file_path):
+    """
+    Check if the file is a PDF based on extension and content.
+    """
+    if not file_path.lower().endswith('.pdf'):
+        return False
+    
+    try:
+        with open(file_path, 'rb') as f:
+            header = f.read(4)
+            return header == b'%PDF'
+    except:
         return False
 
 def test_ocr_setup():
