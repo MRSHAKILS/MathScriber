@@ -40,9 +40,18 @@
                 <strong>MathScriber</strong>
             </a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{% url 'converter:upload' %}">Upload</a>
-                <a class="nav-link" href="{% url 'converter:results' %}">Results</a>
-                <a class="nav-link" href="/admin/">Admin</a>
+                <a class="nav-link" href="{% url 'converter:upload' %}">
+                    <i class="bi bi-cloud-upload"></i> Upload
+                </a>
+                <a class="nav-link" href="{% url 'converter:stylus' %}">
+                    <i class="bi bi-pencil"></i> Stylus
+                </a>
+                <a class="nav-link" href="{% url 'converter:results' %}">
+                    <i class="bi bi-file-earmark-text"></i> Results
+                </a>
+                <a class="nav-link" href="/admin/">
+                    <i class="bi bi-gear"></i> Admin
+                </a>
             </div>
         </div>
     </nav>

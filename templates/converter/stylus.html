@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Stylus Drawing - MathScriber{% endblock %}
+
+{% block extra_css %}
+<style>
+    .drawing-container {
+        position: relative;
+        width: 100%;
+        height: calc(100vh - 200px);
+        min-height: 500px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        background: white;
+        overflow: hidden;
+    }
+    
+    #drawing-canvas {
+        display: block;
+        cursor: crosshair;
+        touch-action: none; /* Prevent scrolling while drawing */
+    }
+    
+    .toolbar {
+        position: sticky;
+        top: 0;
+        background: white;
+        border-bottom: 1px solid #dee2e6;
+        padding: 10px 0;
+        z-index: 1000;
+        margin-bottom: 20px;
+    }
+    
+    .tool-group {
+        display: inline-flex;
+        align-items: center;
+        margin-right: 20px;
+        padding: 5px 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        background: #f8f9fa;
+    }
+    
+    .tool-group label {
+        margin: 0 5px 0 0;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .color-picker {
+        width: 40px;
+        height: 30px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    
+    .brush-size {
+        width: 80px;
+    }
+    
+    .status-text {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-left: 10px;
+    }
+    
+    .canvas-info {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 3px;
+        font-size: 0.8rem;
+        z-index: 100;
+    }
+    
+    @media (max-width: 768px) {
+        .tool-group {
+            margin-right: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .drawing-container {
+            height: calc(100vh - 250px);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="text-center mb-3">
+            <i class="bi bi-pencil text-primary"></i> Stylus Drawing
+        </h1>
+        <p class="text-center text-muted mb-4">
+            Draw mathematical equations or diagrams using stylus, pen, touch, or mouse
+        </p>
+        
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="d-flex flex-wrap align-items-center justify-content-center">
+                <!-- Drawing Tools -->
+                <div class="tool-group">
+                    <label for="pen-color">Color:</label>
+                    <input type="color" id="pen-color" class="color-picker" value="#000000">
+                </div>
+                
+                <div class="tool-group">
+                    <label for="brush-size">Size:</label>
+                    <input type="range" id="brush-size" class="brush-size" min="1" max="20" value="3">
+                    <span id="size-display" class="status-text">3px</span>
+                </div>
+                
+                <!-- Drawing Mode Toggle -->
+                <div class="tool-group">
+                    <button id="pen-mode-btn" class="btn btn-outline-primary btn-sm active me-2">
+                        <i class="bi bi-pencil"></i> Pen
+                    </button>
+                    <button id="eraser-mode-btn" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-eraser-fill"></i> Eraser
+                    </button>
+                    <span id="eraser-size-group" class="ms-2" style="display: none;">
+                        <label for="eraser-size">Size:</label>
+                        <input type="range" id="eraser-size" class="brush-size" min="5" max="50" value="10">
+                        <span id="eraser-size-display" class="status-text">10px</span>
+                    </span>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="tool-group">
+                    <button id="clear-btn" class="btn btn-warning btn-sm me-2">
+                        <i class="bi bi-trash"></i> Clear
+                    </button>
+                    <button id="undo-btn" class="btn btn-secondary btn-sm">
+                        <i class="bi bi-arrow-counterclockwise"></i> Undo
+                    </button>
+                </div>
+                
+                <!-- Save Options -->
+                <div class="tool-group">
+                    <button id="save-pdf-btn" class="btn btn-success btn-sm me-2">
+                        <i class="bi bi-file-earmark-pdf"></i> Save as PDF
+                    </button>
+                    <button id="upload-btn" class="btn btn-primary btn-sm">
+                        <i class="bi bi-cloud-upload"></i> Upload to Converter
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Status -->
+            <div class="text-center mt-2">
+                <span id="status-text" class="status-text">Ready to draw - Use stylus, pen, touch, or mouse</span>
+            </div>
+        </div>
+        
+        <!-- Drawing Canvas Container -->
+        <div class="drawing-container">
+            <canvas id="drawing-canvas"></canvas>
+            <div class="canvas-info">
+                <span id="canvas-dimensions">Loading...</span>
+            </div>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="row mt-4">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> How to Use</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="bi bi-pencil"></i> Drawing</h6>
+                                <ul class="list-unstyled small">
+                                    <li>• Use stylus, pen, touch, or mouse to draw</li>
+                                    <li>• Adjust color and brush size as needed</li>
+                                    <li>• Supports pressure sensitivity (if available)</li>
+                                    <li>• Multi-touch gestures are disabled while drawing</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="bi bi-tools"></i> Actions</h6>
+                                <ul class="list-unstyled small">
+                                    <li>• <strong>Clear:</strong> Erase entire canvas</li>
+                                    <li>• <strong>Undo:</strong> Remove last stroke</li>
+                                    <li>• <strong>Save PDF:</strong> Download as PDF file</li>
+                                    <li>• <strong>Upload:</strong> Send to OCR converter</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form for uploading to converter -->
+<form id="upload-form" style="display: none;" method="post" action="{% url 'converter:upload' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="task" value="equation">
+    <input type="file" id="upload-input" name="images" accept="image/*">
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jsPDF for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Stylus Drawing Script -->
+<script src="{% static 'js/stylus.js' %}"></script>
+{% endblock %}

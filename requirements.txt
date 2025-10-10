@@ -1,43 +1,39 @@
-# Core Django dependencies
+# Core Django framework
 Django==5.2.6
 asgiref==3.9.2
 sqlparse==0.5.3
 tzdata==2025.2
 
-# Image processing
+# Image processing & validation
 Pillow==11.3.0
 
-# OCR dependencies for equation recognition
+# AI-powered equation OCR (primary feature)
 pix2tex>=0.1.2
 torch>=2.0.0
 torchvision>=0.15.0
 
-# OCR dependencies for table recognition  
+# Table recognition OCR
 pytesseract>=0.3.10
 
-# PDF processing dependencies
+# PDF processing & multi-page support
 PyMuPDF>=1.23.0
 pdf2image>=3.1.0
 
-# Optional: Web server for production
+# Production web server
 gunicorn>=20.1.0
 
-# Optional: PostgreSQL database support (if moving from SQLite)
-psycopg2-binary>=2.9.0
+# Database options
+psycopg2-binary>=2.9.0  # PostgreSQL support
 
-# Optional: Environment variables management
+# Configuration management
 python-decouple>=3.6
 
-# Optional: CORS headers for API development
+# API & CORS support
 django-cors-headers>=4.0.0
-
-# Optional: REST framework for API endpoints
 djangorestframework>=3.14.0
 
-# Development dependencies (optional)
-# Uncomment these for development environment
+# Development tools (optional - uncomment for dev)
 # django-debug-toolbar>=4.0.0
 # black>=23.0.0
 # flake8>=6.0.0
-# isort>=5.12.0
 # pytest-django>=4.5.0

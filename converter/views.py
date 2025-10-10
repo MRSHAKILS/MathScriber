@@ -134,6 +134,12 @@ def results_view(request):
         'form': MultipleImageUploadForm()
     })
 
+def stylus_view(request):
+    """
+    View for the stylus drawing page.
+    """
+    return render(request, 'converter/stylus.html')
+
 @require_POST
 def delete_upload_view(request, upload_id):
     """
